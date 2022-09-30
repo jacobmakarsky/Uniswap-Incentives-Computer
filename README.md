@@ -4,7 +4,7 @@ Express server to compute weekly incentives for Uniswap V3 pools
 
 - Install dependencies by running `yarn`
 - Fill `.env` following `.env.example`
-- Launch the express server by running `yarn run`
+- Launch the express server by running `nodemon src/index.ts`
 
 ## Usage
 

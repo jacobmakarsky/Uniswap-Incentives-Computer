@@ -30,6 +30,34 @@ export const updateRewards = (rewards: RewardType, newRewards: { [holder: string
   }
 };
 
+export const fetchRewards = async (hash: string) => {
+  const oldIpfsHash = getIpfsHashFromBytes32(hash);
+  let oldRewards: RewardType = {};
+
+  while (Object.keys(oldRewards).length === 0) {
+    try {
+      oldRewards = (
+        await axios.get<{ [address: string]: { [gauge: string]: string } }>(`https://dweb.link/ipfs/${oldIpfsHash}`, {
+          timeout: 20000,
+        })
+      ).data;
+    } catch {}
+  }
+
+  return oldRewards;
+};
+
+export const logRewards = (rewards: RewardType) => {
+  let sum = BigNumber.from(0);
+  for (const key of Object.keys(rewards)) {
+    for (const pool of Object.keys(rewards[key])) {
+      console.log(key, pool, BN2Number(rewards[key][pool]));
+      sum = sum.add(rewards[key][pool]);
+    }
+  }
+  console.log(`Sum of all rewards distributed ${BN2Number(sum)}`);
+};
+
 export const addLastWeekRewards = async (rewards: RewardType, chainId: ChainId.MAINNET | ChainId.POLYGON) => {
   const merkleRootDistributor = new Contract(
     CONTRACTS_ADDRESSES[chainId].MerkleRootDistributor as string,
