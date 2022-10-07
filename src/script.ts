@@ -28,20 +28,33 @@ async function fetchWeeklyTokenHolder(token: string, week: number, chainId: Chai
     chainId === 1
       ? 'https://api.thegraph.com/subgraphs/name/picodes/weekly-token-holders'
       : 'https://api.thegraph.com/subgraphs/name/picodes/polygon-weekly-token-holder';
-  const query = gql`
-    query Holders($where: [Int!], $token: String!) {
-      holders(where: { week_in: $where, token: $token }) {
-        holder
+  let skip = 0;
+  let isFullyFetched = false;
+  let holders: string[] = [];
+  while (!isFullyFetched) {
+    const query = gql`
+      query Holders($where: [Int!], $token: String!, $skip: Int!) {
+        holders(where: { week_in: $where, token: $token }, first: 1000, skip: $skip) {
+          holder
+        }
       }
+    `;
+    const data = await request<{
+      holders: { holder: string }[];
+    }>(urlTG as string, query, {
+      token: token,
+      where: weeks,
+      skip: skip,
+    });
+    const fetchedHolders = data.holders?.map((e) => e.holder);
+    if (fetchedHolders.length < 1000) {
+      isFullyFetched = true;
+    } else {
+      skip += 1000;
     }
-  `;
-  const data = await request<{
-    holders: { holder: string }[];
-  }>(urlTG as string, query, {
-    token: token,
-    where: weeks,
-  });
-  return data.holders?.map((e) => e.holder);
+    holders = holders.concat(fetchedHolders);
+  }
+  return holders;
 }
 
 async function fetchPositionsAndSwaps(pool: string, week: number, chainId: ChainId, first: number) {
@@ -50,13 +63,8 @@ async function fetchPositionsAndSwaps(pool: string, week: number, chainId: Chain
       ? 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3'
       : 'https://api.thegraph.com/subgraphs/name/zephyrys/uniswap-polygon-but-it-works';
 
-  const positionQuery = gql`
-    query getPositions($pool: String!, $uTimestamp: Int!, $lTimestamp: Int!, $first: Int!) {
-      positionSnapshots(where: { pool_: { id: $pool } }) {
-        position {
-          id
-        }
-      }
+  const swapQuery = gql`
+    query getSwaps($pool: String!, $uTimestamp: Int!, $lTimestamp: Int!, $first: Int!) {
       swaps(
         where: { pool: $pool, timestamp_gt: $lTimestamp, timestamp_lt: $uTimestamp, amountUSD_gt: 50 }
         orderBy: amountUSD
@@ -74,7 +82,6 @@ async function fetchPositionsAndSwaps(pool: string, week: number, chainId: Chain
     }
   `;
   const data = await request<{
-    positionSnapshots: { position: { id: string } }[];
     swaps: {
       amountUSD: string;
       tick: string;
@@ -82,14 +89,42 @@ async function fetchPositionsAndSwaps(pool: string, week: number, chainId: Chain
       timestamp: string;
       transaction: { blockNumber: string };
     }[];
-  }>(tg_uniswap as string, positionQuery, {
+  }>(tg_uniswap as string, swapQuery, {
     lTimestamp: week * (7 * 24 * 3600),
     pool: pool,
     uTimestamp: week * (7 * 24 * 3600) + 7 * 24 * 3600,
     first,
   });
-  const positions = data?.positionSnapshots?.map((e) => e?.position.id);
   const swaps = data.swaps.sort((a, b) => (a.timestamp < b.timestamp ? -1 : 1));
+
+  let skip = 0;
+  let isFullyFetched = false;
+  let positions: string[] = [];
+  while (!isFullyFetched) {
+    const positionQuery = gql`
+      query getPositions($pool: String!, $skip: Int!) {
+        positionSnapshots(where: { pool_: { id: $pool } }, first: 1000, skip: $skip) {
+          position {
+            id
+          }
+        }
+      }
+    `;
+    const data = await request<{
+      positionSnapshots: { position: { id: string } }[];
+    }>(tg_uniswap as string, positionQuery, {
+      pool: pool,
+      skip,
+    });
+    const fetchedPositions = data?.positionSnapshots?.map((e) => e?.position.id);
+    if (fetchedPositions.length < 1000) {
+      isFullyFetched = true;
+    } else {
+      skip += 1000;
+    }
+    positions = positions.concat(fetchedPositions);
+  }
+
   return { positions, swaps };
 }
 
