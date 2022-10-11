@@ -1,5 +1,4 @@
-import { BigNumber, BigNumberish, ethers } from 'ethers';
-import { base58, formatUnits } from 'ethers/lib/utils';
+import { BigNumber, ethers } from 'ethers';
 import JSBI from 'jsbi';
 import invariant from 'tiny-invariant';
 
