@@ -2,7 +2,7 @@
   "name": "uniswap-v3-incentives",
   "version": "1.0.0",
   "main": "src/index.ts",
-  "author": "picodes <picodes@angle.money>",
+  "author": "jacob <jacob@neworder.network>",
   "license": "MIT",
   "scripts": {
     "build": "tsc -p .",
@@ -12,7 +12,6 @@
     "deploy": "gcloud app deploy"
   },
   "dependencies": {
-    "@angleprotocol/sdk": "^1.0.109",
     "@octokit/rest": "^19.0.4",
     "@pinata/sdk": "^1.1.26",
     "@uniswap/sdk-core": "^3.0.1",

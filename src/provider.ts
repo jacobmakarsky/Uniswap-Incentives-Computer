@@ -1,5 +1,6 @@
-import { ChainId } from '@angleprotocol/sdk';
 import { providers } from 'ethers';
+
+import { ChainId } from './globals';
 
 export const requireEnvVars = <T extends string>(vars: T[]): Record<typeof vars[number], string> => {
   const missingEnvVars = vars.filter((v) => !process.env[v]);

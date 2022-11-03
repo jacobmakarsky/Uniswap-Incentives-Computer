@@ -35,7 +35,7 @@ export async function publishToGithubRepo(repoOwner: string, repoName: string, f
     repo: repoName,
     tree: commitableFiles,
     base_tree: commitSHA,
-    message: 'Updated programatically by Angle Protocol',
+    message: 'Updated programatically by New Order DAO',
     parents: [commitSHA],
   });
 
@@ -46,7 +46,7 @@ export async function publishToGithubRepo(repoOwner: string, repoName: string, f
     owner: repoOwner,
     repo: repoName,
     tree: currentTreeSHA,
-    message: 'Updated programatically by Angle Protocol',
+    message: 'Updated programatically by New Order DAO',
     parents: [commitSHA],
   });
 

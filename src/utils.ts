@@ -1,14 +1,15 @@
 import 'dotenv/config';
 
-import { ChainId, CONTRACTS_ADDRESSES } from '@angleprotocol/sdk';
 import axios from 'axios';
 import { BigNumber, BigNumberish, Contract, ethers, utils } from 'ethers';
 import { formatUnits } from 'ethers/lib/utils';
 import keccak256 from 'keccak256';
 import { MerkleTree } from 'merkletreejs';
+import moment from 'moment';
 
 import { merkleDistributorABI } from './abis';
-import { getBytes32FromIpfsHash, getIpfsHashFromBytes32, uploadJSONToIPFS } from './ipfs';
+import { ChainId, CONTRACTS_ADDRESSES } from './globals';
+import { getBytes32FromIpfsHash, uploadJSONToIPFS } from './ipfs';
 import { httpProvider } from './provider';
 
 export function BN2Number(bn: BigNumberish, base = 18) {
@@ -30,18 +31,23 @@ export const updateRewards = (rewards: RewardType, newRewards: { [holder: string
   }
 };
 
-export const fetchRewards = async (hash: string) => {
-  const oldIpfsHash = getIpfsHashFromBytes32(hash);
+export const fetchRewards = async (chainId: number, weekId: number) => {
   let oldRewards: RewardType = {};
-
   while (Object.keys(oldRewards).length === 0) {
     try {
       oldRewards = (
-        await axios.get<{ [address: string]: { [gauge: string]: string } }>(`https://dweb.link/ipfs/${oldIpfsHash}`, {
-          timeout: 20000,
-        })
+        await axios.get<{ [address: string]: { [gauge: string]: string } }>(
+          `https://github.com/jacobmakarsky/uniswapv3-rewards/${
+            (chainId === ChainId.MAINNET ? `mainnet` : `polygon`) + `/rewards_` + weekId?.toString() + `.json`
+          }`,
+          {
+            timeout: 5000,
+          }
+        )
       ).data;
-    } catch {}
+    } catch {
+      console.log('❌ Could not fetch rewards from week', weekId);
+    }
   }
 
   return oldRewards;
@@ -58,23 +64,24 @@ export const logRewards = (rewards: RewardType) => {
   console.log(`Sum of all rewards distributed ${BN2Number(sum)}`);
 };
 
-export const addLastWeekRewards = async (rewards: RewardType, chainId: ChainId.MAINNET | ChainId.POLYGON) => {
-  const merkleRootDistributor = new Contract(
-    CONTRACTS_ADDRESSES[chainId].MerkleRootDistributor as string,
-    merkleDistributorABI,
-    httpProvider(chainId)
-  );
-  const oldIpfsHash = getIpfsHashFromBytes32((await merkleRootDistributor.tree())[1]);
+export const addLastWeekRewards = async (rewards: RewardType, chainId: number) => {
   let oldRewards: RewardType = {};
-
   while (Object.keys(oldRewards).length === 0) {
+    const weekId = Math.floor(moment().unix() / (7 * 86400)) - 1;
     try {
       oldRewards = (
-        await axios.get<{ [address: string]: { [gauge: string]: string } }>(` https://ipfs.starton.io/ipfs/${oldIpfsHash}`, {
-          timeout: 20000,
-        })
+        await axios.get<{ [address: string]: { [gauge: string]: string } }>(
+          `https://github.com/jacobmakarsky/uniswapv3-rewards/${
+            (chainId === ChainId.MAINNET ? `mainnet` : `polygon`) + `/rewards_` + weekId?.toString() + `.json`
+          }`,
+          {
+            timeout: 5000,
+          }
+        )
       ).data;
-    } catch {}
+    } catch {
+      console.log('❌ Could not fetch rewards from week', weekId);
+    }
   }
 
   for (const holder of Object.keys(oldRewards)) {
@@ -86,9 +93,9 @@ export const addLastWeekRewards = async (rewards: RewardType, chainId: ChainId.M
   }
 };
 
-export const uploadAndPush = async (rewards: RewardType, chainId: ChainId.MAINNET | ChainId.POLYGON) => {
+export const uploadAndPush = async (rewards: RewardType, chainId: number) => {
   const keeper = new ethers.Wallet(process.env.PRIVATE_KEY_UNISWAP_INCENTIVES as string, httpProvider(chainId));
-  const merkleRootDistributor = new Contract(CONTRACTS_ADDRESSES[chainId].MerkleRootDistributor as string, merkleDistributorABI, keeper);
+  const merkleRootDistributor = new Contract(CONTRACTS_ADDRESSES.MerkleRootDistributor as string, merkleDistributorABI, keeper);
   const elements: string[] = [];
   const keys = Object.keys(rewards);
 
@@ -99,10 +106,7 @@ export const uploadAndPush = async (rewards: RewardType, chainId: ChainId.MAINNE
     }
 
     const hash = ethers.utils.keccak256(
-      ethers.utils.defaultAbiCoder.encode(
-        ['address', 'address', 'uint256'],
-        [utils.getAddress(keys[key]), CONTRACTS_ADDRESSES[chainId].ANGLE, sum]
-      )
+      ethers.utils.defaultAbiCoder.encode(['address', 'address', 'uint256'], [utils.getAddress(keys[key]), CONTRACTS_ADDRESSES.NEWO, sum])
     );
     elements.push(hash);
   }
@@ -119,13 +123,5 @@ export const uploadAndPush = async (rewards: RewardType, chainId: ChainId.MAINNE
     }
   }
 
-  if (chainId === ChainId.POLYGON) {
-    await merkleRootDistributor.updateTree([merkleTree.getHexRoot(), ipfsBytes], {
-      gasLimit: 300_000,
-      maxPriorityFeePerGas: 50e9,
-      maxFeePerGas: 150e9,
-    });
-  } else {
-    await merkleRootDistributor.updateTree([merkleTree.getHexRoot(), ipfsBytes]);
-  }
+  await merkleRootDistributor.updateTree([merkleTree.getHexRoot(), ipfsBytes]);
 };
