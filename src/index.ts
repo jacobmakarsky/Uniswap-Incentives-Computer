@@ -24,17 +24,11 @@ if (process.env.PRODUCTION_SETUP === 'true' && !!process.env.HEADER_KEY && !!pro
       res.status(403).send('Incorrect authentication');
     }
   });
-  app.use('/polygon', (req, res, next) => {
-    if (req.get(process.env.HEADER_KEY as string) === process.env.HEADER_VALUE) {
-      next();
-    } else {
-      res.status(403).send('Incorrect authentication');
-    }
-  });
 }
 
 // =================================== ROUTES ==================================
 app.get('/mainnet', async (req, res) => {
+  // gets passed into the compute function
   const NEWO_USDC = {
     name: 'NEWO / USDC',
     weights: { fees: 0.4, token0: 0.4, token1: 0.2 },
@@ -42,10 +36,16 @@ app.get('/mainnet', async (req, res) => {
     NEWO: CONTRACTS_ADDRESSES.NEWO,
   };
 
+  // initialize rewards as empty
   const rewards: RewardType = {};
+
+  // call updateRewards with the computed rewards data
   updateRewards(rewards, await computeUniswapV3Incentives(1, NEWO_USDC, parseInt(SWAP_TO_CONSIDER)), 'Uni-V3 NEWO/USDC LP');
 
+  // pull the old rewards from the rewards github
   await addLastWeekRewards(rewards, ChainId.MAINNET);
+
+  //
   if (process.env.PRODUCTION_SETUP === 'true') {
     await uploadAndPush(rewards, ChainId.MAINNET);
     const weekId = Math.floor(moment().unix() / (7 * 86400));

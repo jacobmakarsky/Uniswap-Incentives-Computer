@@ -3,18 +3,16 @@ import { parseEther } from 'ethers/lib/utils';
 import { gql, request } from 'graphql-request';
 import moment from 'moment';
 
-import { arrakisInterface, multicallABI, uniswapV3Interface } from './abis';
-import NewoDistributor__factory from './distributorABI.json';
+import { multicallABI, NewoDistributor__factory, uniswapV3Interface, veNEWOInterface } from './abis';
 import { ChainId, CONTRACTS_ADDRESSES } from './globals';
 import { httpProvider } from './provider';
 import { getAmountsForLiquidity } from './uniswap';
 import { BN2Number } from './utils';
 
+// TODO: all arrakis interfaces were changed to veNEWO, right move?
+
 async function fetchPositionsAndSwaps(pool: string, week: number, chainId: number, first: number) {
-  const tg_uniswap =
-    chainId === 1
-      ? 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3'
-      : 'https://api.thegraph.com/subgraphs/name/zephyrys/uniswap-polygon-but-it-works';
+  const tg_uniswap = 'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3';
 
   const swapQuery = gql`
     query getSwaps($pool: String!, $uTimestamp: Int!, $lTimestamp: Int!, $first: Int!) {
@@ -91,7 +89,7 @@ interface uniswapIncentiveParameters {
 }
 
 // =================================== LOGIC ===================================
-
+// returns rewards
 export async function computeUniswapV3Incentives(chainId: 1 | 137, params: uniswapIncentiveParameters, first: number) {
   const provider = httpProvider(chainId); // ethers.provider
   const mainnetProvider = httpProvider(ChainId.MAINNET); // ethers.provider
@@ -106,7 +104,7 @@ export async function computeUniswapV3Incentives(chainId: 1 | 137, params: unisw
     CONTRACTS_ADDRESSES.NewoDistributor as string,
     NewoDistributor__factory, // abi file
     mainnetProvider
-  ); // todo: as NewoDistributor was removed here
+  ); // todo: `as NewoDistributor` was removed here
   const rewardRate = await newoDistributor.rate();
   const reductionRate = await newoDistributor.RATE_REDUCTION_COEFFICIENT();
   const elapsedWeeks = -weekInPast; // Compute rewards for last week
@@ -186,9 +184,8 @@ export async function computeUniswapV3Incentives(chainId: 1 | 137, params: unisw
             }
           }
 
-          // todo
           // ============================== VENEWO BOOSTING =============================
-
+          // TODO: need to modify the equation for boosts here based of current veNEWO curve
           if (chainId === 1) {
             let totalToken0 = 0;
             let totalToken1 = 0;
@@ -204,7 +201,7 @@ export async function computeUniswapV3Incentives(chainId: 1 | 137, params: unisw
             for (const h of Object.keys(tempData)) {
               calls.push({
                 canFail: true,
-                data: arrakisInterface.encodeFunctionData('balanceOf', [h]),
+                data: veNEWOInterface.encodeFunctionData('balanceOf', [h]),
                 target: CONTRACTS_ADDRESSES.veNEWO,
               });
             }
@@ -218,12 +215,12 @@ export async function computeUniswapV3Incentives(chainId: 1 | 137, params: unisw
             )[0];
             let supply = BigNumber.from(0);
             for (const holder of Object.keys(tempData)) {
-              const veNEWOBalance = arrakisInterface.decodeFunctionResult('balanceOf', fetchedVeNewoData[j++])[0];
+              const veNEWOBalance = veNEWOInterface.decodeFunctionResult('balanceOf', fetchedVeNewoData[j++])[0];
               supply = supply.add(veNEWOBalance);
             }
             j = 0;
             for (const holder of Object.keys(tempData)) {
-              const veNEWOBalance = arrakisInterface.decodeFunctionResult('balanceOf', fetchedVeNewoData[j++])[0];
+              const veNEWOBalance = veNEWOInterface.decodeFunctionResult('balanceOf', fetchedVeNewoData[j++])[0];
               const boostFees =
                 1 +
                 (tempData[holder].fees === 0

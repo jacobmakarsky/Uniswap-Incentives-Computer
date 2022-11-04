@@ -1,6 +1,6 @@
 import { Octokit } from '@octokit/rest';
 const client = new Octokit({
-  auth: process.env.AUTH_TOKEN,
+  auth: process.env.GITHUB_TOKEN,
 });
 interface File {
   path: string;

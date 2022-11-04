@@ -25,8 +25,11 @@ const number2string = (n: number): string => {
 };
 
 export const updateRewards = (rewards: RewardType, newRewards: { [holder: string]: number }, gaugeName: string) => {
+  // for every holder of new rewards
   for (const holder of Object.keys(newRewards)) {
+    // if no rewards set to 0
     if (!rewards[holder]) rewards[holder] = {};
+    // set holders rewards of the pool to newrewards
     rewards[utils.getAddress(holder)][gaugeName] = number2string(newRewards[holder]);
   }
 };

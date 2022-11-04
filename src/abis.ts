@@ -29,28 +29,15 @@ export const uniswapV3PoolABI = [
   'function token1() external view returns(address)',
 ];
 
-export const arrakisABI = [
-  'function getUnderlyingBalances() external view returns(uint256 amount0Current, uint256 amount1Current)',
-  'function positions(bytes32) external view returns(uint128, uint256, uint256, uint128, uint128)',
-  'function lowerTick() external view returns(int24)',
-  'function upperTick() external view returns(int24)',
-  'function balanceOf(address) external view returns(uint256)',
-];
-
-export const gammaABI = [
-  'function getBasePosition() external view returns(uint128 liquidity, uint256 amount0, uint256 amount1)',
-  'function getLimitPosition() external view returns(uint128 liquidity, uint256 amount0, uint256 amount1)',
-  'function baseLower() external view returns(int24)',
-  'function baseUpper() external view returns(int24)',
-  'function limitLower() external view returns(int24)',
-  'function limitUpper() external view returns(int24)',
-];
+export const veNEWOABI = ['function balanceOf(address) external view returns(uint256)'];
 
 export const merkleDistributorABI = [
   'function updateTree((bytes32,bytes32)) external',
   'function tree() external view returns(bytes32,bytes32)',
 ];
 
+// TODO
+export const NewoDistributor__factory = [''];
+
 export const uniswapV3Interface = new utils.Interface(uniswapV3PoolABI);
-export const arrakisInterface = new utils.Interface(arrakisABI);
-export const gammaInterface = new utils.Interface(gammaABI);
+export const veNEWOInterface = new utils.Interface(veNEWOABI);

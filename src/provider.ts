@@ -24,13 +24,11 @@ const { PRIVATE_KEY_UNISWAP_INCENTIVES } =
 
 export const NETWORKS = {
   [ChainId.MAINNET]: PROVIDER_MAINNET,
-  [ChainId.POLYGON]: PROVIDER_POLYGON,
 };
 export const httpProvider = (network: keyof typeof NETWORKS) => new providers.JsonRpcProvider(NETWORKS[network]);
 
 const PRIVATE_KEYS = {
   [ChainId.MAINNET]: PRIVATE_KEY_UNISWAP_INCENTIVES,
-  [ChainId.POLYGON]: PRIVATE_KEY_UNISWAP_INCENTIVES,
 };
 
 export const getPrivateKeys = (network: keyof typeof PRIVATE_KEYS) => {
