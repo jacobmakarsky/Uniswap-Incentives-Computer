@@ -11,10 +11,15 @@ interface File {
 }
 
 export async function publishToGithubRepo(repoOwner: string, repoName: string, files: { name: string; contents: string }[]) {
+  console.log('Pushing to github repo...');
+
   const commits = await client.repos.listCommits({
     owner: repoOwner,
     repo: repoName,
   });
+
+  console.log('commits: ', commits);
+
   // get latest commit hash
   const commitSHA = commits.data[0].sha;
   // map to the proper format
@@ -26,6 +31,7 @@ export async function publishToGithubRepo(repoOwner: string, repoName: string, f
       content: contents,
     };
   });
+  console.log('commitable files: ', commitableFiles);
 
   // equivalent to adding files in git
   const {

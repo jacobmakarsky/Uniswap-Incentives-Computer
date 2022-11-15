@@ -28,10 +28,19 @@ if (process.env.PRODUCTION_SETUP === 'true' && !!process.env.HEADER_KEY && !!pro
 
 // =================================== ROUTES ==================================
 app.get('/mainnet', async (req, res) => {
+  console.log('Mainnet route taken...');
+  interface uniswapIncentiveParameters {
+    //todo globalize
+    name: string;
+    weights: { fees: number; token0: number; token1: number };
+    uniswapV3poolAddress: string;
+    NEWO: string;
+  }
+
   // gets passed into the compute function
-  const NEWO_USDC = {
+  const NEWO_USDC: uniswapIncentiveParameters = {
     name: 'NEWO / USDC',
-    weights: { fees: 0.4, token0: 0.4, token1: 0.2 },
+    weights: { fees: 0.4, token0: 0.4, token1: 0.2 }, // todo make sure these are the weights we want
     uniswapV3poolAddress: CONTRACTS_ADDRESSES.poolAddress,
     NEWO: CONTRACTS_ADDRESSES.NEWO,
   };
@@ -40,14 +49,17 @@ app.get('/mainnet', async (req, res) => {
   const rewards: RewardType = {};
 
   // call updateRewards with the computed rewards data
-  updateRewards(rewards, await computeUniswapV3Incentives(1, NEWO_USDC, parseInt(SWAP_TO_CONSIDER)), 'Uni-V3 NEWO/USDC LP');
+  updateRewards(rewards, await computeUniswapV3Incentives(5, NEWO_USDC, parseInt(SWAP_TO_CONSIDER)), 'Uni-V3 NEWO/USDC LP');
 
-  // pull the old rewards from the rewards github
-  await addLastWeekRewards(rewards, ChainId.MAINNET);
+  // // pull the old rewards from the rewards github
+  // await addLastWeekRewards(rewards, ChainId.MAINNET);
 
   //
-  if (process.env.PRODUCTION_SETUP === 'true') {
-    await uploadAndPush(rewards, ChainId.MAINNET);
+  if (process.env.PRODUCTION_SETUP === 'false') {
+    // change for testnet if want to upload to github
+    // upload to IPFS
+    // await uploadAndPush(rewards, ChainId.MAINNET);
+
     const weekId = Math.floor(moment().unix() / (7 * 86400));
     const files = [
       {
@@ -55,12 +67,16 @@ app.get('/mainnet', async (req, res) => {
         contents: JSON.stringify(rewards),
       },
     ];
-    try {
-      await publishToGithubRepo('jacobmakarsky', 'uniswapv3-rewards', files);
-    } catch {
-      console.log('Failed to publish to github repo ❌');
-    }
+
+    console.log('generated files: ', files);
+
+    // try {
+    //   await publishToGithubRepo('jacobmakarsky', 'uniswapv3-rewards', files);
+    // } catch (error) {
+    //   console.log('Failed to publish to github repo ❌: ', error);
+    // }
   }
+
   res.json(rewards);
 });
 

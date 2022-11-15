@@ -74,6 +74,7 @@ async function uploadPinata(json: Record<string, any>) {
   }
 }
 
+// todo not being used right now
 async function uploadWeb3Storage(json: Record<string, any>) {
   const client = new Web3Storage({ token: process.env.WEB3_STORAGE_TOKEN as string });
   const blob = new Blob([JSON.stringify(json)], { type: 'application/json' });

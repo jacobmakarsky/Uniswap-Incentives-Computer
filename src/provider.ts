@@ -14,10 +14,10 @@ export const requireEnvVars = <T extends string>(vars: T[]): Record<typeof vars[
   }, {} as Record<typeof vars[number], string>);
 };
 
-const { PROVIDER_MAINNET, PROVIDER_POLYGON } =
+const { PROVIDER_MAINNET } =
   process.env.PRODUCTION_SETUP === 'true'
-    ? requireEnvVars(['PROVIDER_MAINNET', 'PROVIDER_POLYGON', 'PRIVATE_KEY_UNISWAP_INCENTIVES'])
-    : requireEnvVars(['PROVIDER_MAINNET', 'PROVIDER_POLYGON']);
+    ? requireEnvVars(['PROVIDER_MAINNET', 'PRIVATE_KEY_UNISWAP_INCENTIVES'])
+    : requireEnvVars(['PROVIDER_MAINNET']);
 
 const { PRIVATE_KEY_UNISWAP_INCENTIVES } =
   process.env.PRODUCTION_SETUP === 'true' ? requireEnvVars(['PRIVATE_KEY_UNISWAP_INCENTIVES']) : { PRIVATE_KEY_UNISWAP_INCENTIVES: '' };

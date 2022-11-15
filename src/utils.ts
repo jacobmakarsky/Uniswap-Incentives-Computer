@@ -25,6 +25,7 @@ const number2string = (n: number): string => {
 };
 
 export const updateRewards = (rewards: RewardType, newRewards: { [holder: string]: number }, gaugeName: string) => {
+  console.log('Updating rewards...');
   // for every holder of new rewards
   for (const holder of Object.keys(newRewards)) {
     // if no rewards set to 0
@@ -32,28 +33,6 @@ export const updateRewards = (rewards: RewardType, newRewards: { [holder: string
     // set holders rewards of the pool to newrewards
     rewards[utils.getAddress(holder)][gaugeName] = number2string(newRewards[holder]);
   }
-};
-
-export const fetchRewards = async (chainId: number, weekId: number) => {
-  let oldRewards: RewardType = {};
-  while (Object.keys(oldRewards).length === 0) {
-    try {
-      oldRewards = (
-        await axios.get<{ [address: string]: { [gauge: string]: string } }>(
-          `https://github.com/jacobmakarsky/uniswapv3-rewards/${
-            (chainId === ChainId.MAINNET ? `mainnet` : `polygon`) + `/rewards_` + weekId?.toString() + `.json`
-          }`,
-          {
-            timeout: 5000,
-          }
-        )
-      ).data;
-    } catch {
-      console.log('❌ Could not fetch rewards from week', weekId);
-    }
-  }
-
-  return oldRewards;
 };
 
 export const logRewards = (rewards: RewardType) => {
@@ -68,22 +47,21 @@ export const logRewards = (rewards: RewardType) => {
 };
 
 export const addLastWeekRewards = async (rewards: RewardType, chainId: number) => {
+  console.log('Adding last weeks rewards...');
   let oldRewards: RewardType = {};
   while (Object.keys(oldRewards).length === 0) {
     const weekId = Math.floor(moment().unix() / (7 * 86400)) - 1;
     try {
       oldRewards = (
         await axios.get<{ [address: string]: { [gauge: string]: string } }>(
-          `https://github.com/jacobmakarsky/uniswapv3-rewards/${
-            (chainId === ChainId.MAINNET ? `mainnet` : `polygon`) + `/rewards_` + weekId?.toString() + `.json`
-          }`,
+          `https://github.com/jacobmakarsky/uniswapv3-rewards/${`mainnet/rewards_` + weekId?.toString() + `.json`}`,
           {
             timeout: 5000,
           }
         )
       ).data;
     } catch {
-      console.log('❌ Could not fetch rewards from week', weekId);
+      console.log('❌ Could not fetch old rewards from week', weekId);
     }
   }
 
@@ -97,6 +75,7 @@ export const addLastWeekRewards = async (rewards: RewardType, chainId: number) =
 };
 
 export const uploadAndPush = async (rewards: RewardType, chainId: number) => {
+  console.log('Uploading and pushing rewards to IPFS...');
   const keeper = new ethers.Wallet(process.env.PRIVATE_KEY_UNISWAP_INCENTIVES as string, httpProvider(chainId));
   const merkleRootDistributor = new Contract(CONTRACTS_ADDRESSES.MerkleRootDistributor as string, merkleDistributorABI, keeper);
   const elements: string[] = [];
