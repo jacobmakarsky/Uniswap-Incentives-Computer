@@ -4,11 +4,11 @@ Express server to compute weekly incentives for Uniswap V3 pools
 
 - Install dependencies by running `yarn`
 - Fill `.env` following `.env.example`
-- Launch the express server by running `nodemon src/index.ts`
+- Launch the express server by running `yarn run run`
 
 ## Usage
 
-2 routes are currently built: `http://localhost:8080/polygon` and `http://localhost:8080/mainnet`
+Go to `http://localhost:8080/mainnet` in browser
 
 - Weekly distribution is split against every swap that happened proportionally to their volume
 
@@ -24,7 +24,7 @@ Express server to compute weekly incentives for Uniswap V3 pools
 # Rewards calculation
 
 - For each swap, the rewards are split between all LPs position in range, proportionally to:
-  - (0.4 _ (fees earned by the position) / (fees of the swap) + 0.4 _ (agEUR in the position) / (agEUR in the pool) + 0.2 _ (other token in the position) / (other token in the pool)) _ veANGLE boost
+  - (0.4 _ (fees earned by the position) / (fees of the swap) + 0.4 _ (NEWO in the position) / (NEWO in the pool) + 0.2 _ (other token in the position) / (other token in the pool)) _ veNEWO boost
 
 # Distribution
 
