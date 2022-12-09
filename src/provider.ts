@@ -14,21 +14,23 @@ export const requireEnvVars = <T extends string>(vars: T[]): Record<typeof vars[
   }, {} as Record<typeof vars[number], string>);
 };
 
-const { PROVIDER_MAINNET } =
+const { PROVIDER_MAINNET, PROVIDER_TESTNET } =
   process.env.PRODUCTION_SETUP === 'true'
-    ? requireEnvVars(['PROVIDER_MAINNET', 'PRIVATE_KEY_UNISWAP_INCENTIVES'])
-    : requireEnvVars(['PROVIDER_MAINNET']);
+    ? requireEnvVars(['PROVIDER_MAINNET', 'PROVIDER_TESTNET', 'PRIVATE_KEY_UNISWAP_INCENTIVES'])
+    : requireEnvVars(['PROVIDER_MAINNET', 'PROVIDER_TESTNET']);
 
 const { PRIVATE_KEY_UNISWAP_INCENTIVES } =
   process.env.PRODUCTION_SETUP === 'true' ? requireEnvVars(['PRIVATE_KEY_UNISWAP_INCENTIVES']) : { PRIVATE_KEY_UNISWAP_INCENTIVES: '' };
 
 export const NETWORKS = {
   [ChainId.MAINNET]: PROVIDER_MAINNET,
+  [ChainId.GOERLI]: PROVIDER_TESTNET,
 };
 export const httpProvider = (network: keyof typeof NETWORKS) => new providers.JsonRpcProvider(NETWORKS[network]);
 
 const PRIVATE_KEYS = {
   [ChainId.MAINNET]: PRIVATE_KEY_UNISWAP_INCENTIVES,
+  [ChainId.GOERLI]: PRIVATE_KEY_UNISWAP_INCENTIVES,
 };
 
 export const getPrivateKeys = (network: keyof typeof PRIVATE_KEYS) => {

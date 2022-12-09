@@ -46,6 +46,7 @@ export function getIpfsHashFromBytes32(bytes32Hex: string) {
 export async function uploadJSONToIPFS(json: Record<string, any>): Promise<string | undefined> {
   const cid = await uploadPinata(json);
   console.log('JSON uploaded to IPFS with id: ', cid);
+
   if (cid) {
     await pinWeb3Storage(cid);
     console.log('pinned web3.storage');

@@ -29,15 +29,23 @@ export const uniswapV3PoolABI = [
   'function token1() external view returns(address)',
 ];
 
-export const veNEWOABI = ['function balanceOf(address) external view returns(uint256)'];
+export const veNEWOABI = [
+  'function balanceOf(address) external view returns(uint256)',
+  'function veMult(address) external view returns(uint256)',
+];
 
 export const merkleDistributorABI = [
-  'function updateTree((bytes32,bytes32)) external',
+  'function updateTree((bytes32, bytes32)) external',
+  'function toggleTrusted(address) external',
   'function tree() external view returns(bytes32,bytes32)',
+  // 'function merkleRoot() external view returns(bytes32)', // uses merkleRoot instead of tree struct
 ];
 
 // TODO
-export const NewoDistributor__factory = [''];
+export const newoDistributorABI = [
+  'function rewardRate() external view returns(uint256)',
+  'function rewardsDuration() external view returns(uint256)',
+];
 
 export const uniswapV3Interface = new utils.Interface(uniswapV3PoolABI);
 export const veNEWOInterface = new utils.Interface(veNEWOABI);

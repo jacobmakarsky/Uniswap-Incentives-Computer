@@ -48,18 +48,18 @@ app.get('/mainnet', async (req, res) => {
   // initialize rewards as empty
   const rewards: RewardType = {};
 
-  // call updateRewards with the computed rewards data
-  updateRewards(rewards, await computeUniswapV3Incentives(5, NEWO_USDC, parseInt(SWAP_TO_CONSIDER)), 'Uni-V3 NEWO/USDC LP');
+  if (process.env.PRODUCTION_SETUP === 'true') {
+    // // pull the old rewards from the rewards github
+    // comment out for first run since nothing is there yet
+    // await addLastWeekRewards(rewards, ChainId.MAINNET);
 
-  // // pull the old rewards from the rewards github
-  // await addLastWeekRewards(rewards, ChainId.MAINNET);
+    // call updateRewards with the computed rewards data
+    updateRewards(rewards, await computeUniswapV3Incentives(ChainId.MAINNET, NEWO_USDC, parseInt(SWAP_TO_CONSIDER)), 'Uni-V3 NEWO/USDC LP');
 
-  //
-  if (process.env.PRODUCTION_SETUP === 'false') {
-    // change for testnet if want to upload to github
-    // upload to IPFS
-    // await uploadAndPush(rewards, ChainId.MAINNET);
+    // upload merkle root to distributor contract
+    await uploadAndPush(rewards, ChainId.MAINNET);
 
+    // create rewards files by weekId
     const weekId = Math.floor(moment().unix() / (7 * 86400));
     const files = [
       {
@@ -68,16 +68,44 @@ app.get('/mainnet', async (req, res) => {
       },
     ];
 
-    console.log('generated files: ', files);
+    // upload rewards files to public github repo
+    try {
+      await publishToGithubRepo('jacobmakarsky', 'uniswapv3-rewards', files);
+    } catch (error) {
+      console.log('Failed to publish to github repo ❌: ', error);
+    }
+  } else {
+    // // pull the old rewards from the rewards github
+    // comment out for first run since nothing is there yet
+    // await addLastWeekRewards(rewards, ChainId.GOERLI);
 
-    // try {
-    //   await publishToGithubRepo('jacobmakarsky', 'uniswapv3-rewards', files);
-    // } catch (error) {
-    //   console.log('Failed to publish to github repo ❌: ', error);
-    // }
+    // call updateRewards with the computed rewards data
+    updateRewards(rewards, await computeUniswapV3Incentives(ChainId.GOERLI, NEWO_USDC, parseInt(SWAP_TO_CONSIDER)), 'Uni-V3 NEWO/USDC LP');
+
+    // upload merkle root to distributor contract
+    await uploadAndPush(rewards, ChainId.GOERLI); // upload merkle root to contract
+
+    // create rewards files by weekId
+    const weekId = Math.floor(moment().unix() / (7 * 86400));
+    const files = [
+      {
+        name: `mainnet/rewards_${weekId}.json`,
+        contents: JSON.stringify(rewards),
+      },
+    ];
+
+    // upload rewards files to public github repo
+    console.log('Uploading to github...');
+    try {
+      await publishToGithubRepo('jacobmakarsky', 'uniswapv3-rewards', files);
+    } catch (error) {
+      console.log('Failed to publish to github repo ❌: ', error);
+    }
   }
 
   res.json(rewards);
+
+  console.log('Finished :D');
 });
 
 const PORT = process.env.PORT || 8080;

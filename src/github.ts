@@ -10,6 +10,36 @@ interface File {
   content: string;
 }
 
+async function newCommit(repoOwner: string, repoName: string, commitableFiles: any) {
+  // create a new tree (i.e., snapshot of the repository's files)
+  const {
+    data: { sha: treeSHA },
+  } = await client.git.createTree({
+    owner: repoOwner,
+    repo: repoName,
+    tree: commitableFiles,
+    message: 'Updated programatically by New Order DAO',
+  });
+
+  // create a new commit on the tree and push it to the repository
+  const {
+    data: { sha: commitSHA },
+  } = await client.git.createCommit({
+    owner: repoOwner,
+    repo: repoName,
+    tree: treeSHA,
+    message: 'Updated programatically by New Order DAO',
+  });
+
+  // update the repository's main branch to point to the new commit
+  await client.git.updateRef({
+    owner: repoOwner,
+    repo: repoName,
+    sha: commitSHA,
+    ref: 'heads/main', // the name of the branch you want to push to
+  });
+}
+
 export async function publishToGithubRepo(repoOwner: string, repoName: string, files: { name: string; contents: string }[]) {
   console.log('Pushing to github repo...');
 
@@ -17,8 +47,6 @@ export async function publishToGithubRepo(repoOwner: string, repoName: string, f
     owner: repoOwner,
     repo: repoName,
   });
-
-  console.log('commits: ', commits);
 
   // get latest commit hash
   const commitSHA = commits.data[0].sha;
@@ -32,6 +60,10 @@ export async function publishToGithubRepo(repoOwner: string, repoName: string, f
     };
   });
   console.log('commitable files: ', commitableFiles);
+
+  if (commits.data.length === 0) {
+    newCommit(repoOwner, repoName, commitableFiles);
+  }
 
   // equivalent to adding files in git
   const {
