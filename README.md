@@ -1,4 +1,6 @@
-Express server to compute weekly incentives for Uniswap V3 pools
+![Logo](https://neworder.network/assets/images/logo.png)
+
+# NEWO UniswapV3 Incentives Computer
 
 ## Setup
 
