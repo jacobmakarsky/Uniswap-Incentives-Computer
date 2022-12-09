@@ -16,7 +16,7 @@ Go to `http://localhost:8080/mainnet` in browser
 
 To test on Göerli:
 
-- see the ![newo-testnet](https://github.com/new-order-network/newo-testnet) repo
+- see the [newo-testnet](https://github.com/new-order-network/newo-testnet) repo
 
 # How does it work
 
